@@ -1,0 +1,3 @@
+C:\Users\jiasheng.huang\Documents\GitHub\MySoftRender\SoftRender\Debug\SoftRender.exe
+C:\Users\jiasheng.huang\Documents\GitHub\MySoftRender\SoftRender\Debug\SoftRender.pdb
+C:\Users\jiasheng.huang\Documents\GitHub\MySoftRender\Debug\SoftRender.pdb
