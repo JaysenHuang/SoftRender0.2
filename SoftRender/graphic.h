@@ -2,12 +2,14 @@
 #ifndef _GRAPHIC_H_
 #define _GRAPHIC_H_
 
-
 #include"Globel.h"
 #include"Math.h"
 #include"Texture.h"
 #include"Camera.h"
+#include<mutex>
 
+
+void SwapBuffer();
 //Starts up SDL and creates window
 extern bool init();
 
@@ -25,7 +27,7 @@ class FrameBuffer {
 public:
 	int Width, Height;
 
-	std::vector<float> colorBuffer;
+	std::vector<char> colorBuffer;
 	std::vector<float> depthBuffer;
 	
 	
@@ -39,7 +41,7 @@ public:
 
 	void ClearDepthBuffer();
 
-	void WritePoint(const int x, const int y, const glm::vec4 color, SDL_Renderer* gRenderer);
+	void WritePoint(const int x, const int y, const glm::vec4 color);
 
 	float GetDepth(const int& x, const int& y);
 
@@ -102,44 +104,18 @@ public:
 	
 };
 
-class Shader {
 
-public:
-	Shader();
-	~Shader();
-	std::vector<glm::vec4> Viewplanes;
-	Texture* texture;
-private:
-	glm::mat4 ModelMatrix;
-	glm::mat4 ViewMatrix;
-	glm::mat4 ProjectMatrix;
-	
-public:
-	V2F VertexShader(const Vertex& a2v);
-	//现在直接输出点的颜色
- //	glm::vec4 FragmentShader(const V2F& v);
-
-	void setModelMatrix(const glm::mat4& model);
-
-	void setViewMatrix(const glm::mat4& view);
-
-	void setProjectMatrix(const glm::mat4& project);
-
-	void UpdateViewPlanes();
-
-	glm::vec4 FragmentShader(const V2F& v,Texture texture);
-};
 
 
 
 
 void ScanLine(const V2F& left, const V2F& right);
 
-void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3,int i);
+void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3);
 
-void DownTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i);
+void DownTriangle(const V2F& v1, const V2F& v2, const V2F& v3);
 
-void ScanLineTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i);
+void ScanLineTriangle(const V2F& v1, const V2F& v2, const V2F& v3);
 
 void PerspectiveDivision(V2F& v);
 //void DrawMesh(const Mesh& mesh);

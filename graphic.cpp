@@ -2,7 +2,9 @@
 
 //Class FrameBuffer
 
-int cpu = 3;
+int cpu =1;
+
+extern std::mutex mx;
 
 FrameBuffer::~FrameBuffer()=default;
 
@@ -23,7 +25,7 @@ void FrameBuffer::Resize(const int& w, const int& h) {
 }
 
 void FrameBuffer::ClearColorBuffer(const glm::vec4& color) {
-	float* p = colorBuffer.data();
+	char* p = colorBuffer.data();
 	for (int i = 0; i < Width * Height * 4; i += 4) {
 		*(p + i) = color.r;
 		*(p + i + 1) = color.g;
@@ -32,14 +34,6 @@ void FrameBuffer::ClearColorBuffer(const glm::vec4& color) {
 		
 	}
 
-	/*
-	int length = Width * Height * 4;
-	for (int i = 0; i < length; i+=4) {
-		colorBuffer[i] = 255;
-		colorBuffer[i + 1] = 0;
-		colorBuffer[i + 2] = 0;
-		colorBuffer[i + 3] = 0;
-	}*/
 }
 
 void FrameBuffer::ClearDepthBuffer() {
@@ -49,17 +43,21 @@ void FrameBuffer::ClearDepthBuffer() {
 		*(p + i) = 1.0f;
 	}
 }
-void FrameBuffer::WritePoint(const int x, const int y, const glm::vec4 color, SDL_Renderer* gRenderer) {
+void FrameBuffer::WritePoint(const int x, const int y, const glm::vec4 color) {
 	if (x < 0 || x >= Width || y < 0 || y >= Height)
 		return;
-	int xy = (y*Width +x);
-
-	colorBuffer[xy * 4] = color.r;
-	colorBuffer[xy * 4 + 1] = color.g;
-	colorBuffer[xy * 4 + 2] = color.b;
-	colorBuffer[xy * 4 + 3] = color.a;
-	//SDL_SetRenderDrawColor(gRenderer, colorBuffer[xy * 4], colorBuffer[xy * 4 + 1], colorBuffer[xy * 4 + 2], colorBuffer[xy * 4 + 3]);
-	//SDLDrawPixel(x,y);
+	int xy = 4*(y*Width +x);
+	int r, g, b, a;
+	r = color.x * 255;
+	g = color.y * 255;
+	b = color.z * 255;
+	a = color.w * 255;
+	char* p = colorBuffer.data();
+	*(p + xy) =r;
+	*(p + xy + 1) = g;
+	*(p + xy + 2) = b;
+	*(p + xy + 3) = a;
+	
 }
 
 float FrameBuffer::GetDepth(const int& x, const int& y){
@@ -134,63 +132,6 @@ return result;
 	}
 
 
-//Class Shader
-
-Shader::Shader() {
-	ModelMatrix = glm::mat4(1.0f);
-	ViewMatrix = glm::mat4(1.0f);
-	ProjectMatrix = glm::mat4(1.0f);
-	Viewplanes.resize(6, glm::vec4(0));
-	Texture* texture;
-}
-
-Shader::~Shader() = default;
-
-V2F Shader::VertexShader(const Vertex& a2v) {
-	V2F o;
-	o.worldPos = ModelMatrix * a2v.position;
-	// PVM*v
-	o.windowPos = ProjectMatrix * ViewMatrix * o.worldPos;
-
-	o.Z = 1/o.windowPos.w;
-	o.worldPos =o.worldPos* o.Z;
-	o.color = a2v.color*o.Z;
-	o.normal = a2v.normal*o.Z;
-	o.texcoord = a2v.texcoord*o.Z;
-	return o;
-}
-
-/*glm::vec4 Shader::FragmentShader(const V2F& v) {
-	glm::vec4 color;
-	color = v.color;
-	return color;
-}*/
-
-void Shader::setModelMatrix(const glm::mat4& model) {
-	ModelMatrix = model;
-}
-
-void Shader::setViewMatrix(const glm::mat4& view) {
-	ViewMatrix = view;
-}
-
-void Shader::setProjectMatrix(const glm::mat4& project) {
-	ProjectMatrix = project;
-}
-
-glm::vec4 Shader::FragmentShader(const V2F& v,Texture texture) {
-	
-	glm::vec4 color =texture.Sample2D(v.texcoord);
-	return color;
-}
-
-void Shader::UpdateViewPlanes() {
-	ViewingFrustumPlanes(Viewplanes, ProjectMatrix * ViewMatrix);
-}
-
-
-
-
 
 
 void PerspectiveDivision(V2F& v) {
@@ -201,7 +142,7 @@ void PerspectiveDivision(V2F& v) {
 }
 
 
-void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i) {
+void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3) {
     V2F left, right, top;
     left = v1.windowPos.x > v2.windowPos.x ? v2 : v1;
     right = v1.windowPos.x > v2.windowPos.x ? v1 : v2;
@@ -210,6 +151,7 @@ void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i) {
     int dy = top.windowPos.y - left.windowPos.y;
     int nowY = top.windowPos.y;
     //从上往下插值
+	int i = cpu;
 	switch (i){
 
 		case 0: {
@@ -386,14 +328,14 @@ void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i) {
   
 
 
-void DownTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i) {
+void DownTriangle(const V2F& v1, const V2F& v2, const V2F& v3) {
     V2F left, right, bottom;
     left = v1.windowPos.x > v2.windowPos.x ? v2 : v1;
     right = v1.windowPos.x > v2.windowPos.x ? v1 : v2;
     bottom = v3;
     int dy = left.windowPos.y - bottom.windowPos.y;
     int nowY = left.windowPos.y;
-
+	int i = cpu;
     //从上往下插值
 	switch (i) {
 	case 0: {
@@ -569,7 +511,7 @@ void DownTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i) {
 
 
 
-void ScanLineTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i) {
+void ScanLineTriangle(const V2F& v1, const V2F& v2, const V2F& v3) {
 
     std::vector<V2F> arr = { v1,v2,v3 };
     if (arr[0].windowPos.y > arr[1].windowPos.y) {
@@ -590,17 +532,28 @@ void ScanLineTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i) {
     //arr[0] 在最下面  arr[2]在最上面
     //中间跟上面的相等，是底三角形
     if (arr[1].windowPos.y == arr[2].windowPos.y) {
-        DownTriangle(arr[1], arr[2], arr[0],i);
+        DownTriangle(arr[1], arr[2], arr[0]);
     }//顶三角形
     else if (arr[1].windowPos.y == arr[0].windowPos.y) {
-        UpTriangle(arr[1], arr[0], arr[2],i);
+        UpTriangle(arr[1], arr[0], arr[2]);
     }
     else {
         //插值求出中间点对面的那个点，划分为两个新的三角形
         float weight = (arr[2].windowPos.y - arr[1].windowPos.y) / (arr[2].windowPos.y - arr[0].windowPos.y);
         V2F newEdge = V2F::lerp(arr[2], arr[0], weight);
-        UpTriangle(arr[1], newEdge, arr[2],i);
-        DownTriangle(arr[1], newEdge, arr[0],i);
+        UpTriangle(arr[1], newEdge, arr[2]);
+        DownTriangle(arr[1], newEdge, arr[0]);
 
     }
+}
+
+
+void SwapBuffer()
+{
+	mx.lock();
+	FrameBuffer* p = FrontBuffer;
+	FrontBuffer = BackBuffer;
+	BackBuffer = p;
+	mx.unlock();
+//	std::cout << FrontBuffer << std::endl;
 }

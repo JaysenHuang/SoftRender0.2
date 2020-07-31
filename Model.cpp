@@ -19,6 +19,7 @@ void Model::SetMaterial(const int& id, const Material& m) {
 }
 void Model::LoadObj(const std::string& path) {
 	std::ifstream in(path);
+	
 	if (!in) {
 		std::cout << "Open Obj File Failed" << std::endl;
 		return;

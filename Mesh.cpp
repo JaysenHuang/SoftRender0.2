@@ -65,12 +65,12 @@ Mesh CreatePlane(const glm::vec3& leftTop, const glm::vec3& leftBottom, const gl
 	result.VBO[3].color = glm::vec4(255, 0, 255, 255);
 	result.VBO[3].texcoord = glm::vec2(0.0f, 0.0f);
 	//绘制三角形的顺序是 左上->左下->右下 左上->左下->右上 都是逆时针方向 
-	result.EBO[0] = 0;
+	result.EBO[0] = 2;
 	result.EBO[1] = 1;
-	result.EBO[2] = 2;
-	result.EBO[3] = 0;
+	result.EBO[2] = 0;
+	result.EBO[3] = 3;
 	result.EBO[4] = 2;
-	result.EBO[5] = 3;
+	result.EBO[5] = 0;
 	return result;
 }
 

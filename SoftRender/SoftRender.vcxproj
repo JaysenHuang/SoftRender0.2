@@ -89,6 +89,8 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
+      <OpenMPSupport>true</OpenMPSupport>
+      <Optimization>Disabled</Optimization>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
@@ -145,12 +147,14 @@
     <ClCompile Include="..\Camera.cpp" />
     <ClCompile Include="..\Draw.cpp" />
     <ClCompile Include="..\graphic.cpp" />
+    <ClCompile Include="..\Light.cpp" />
     <ClCompile Include="..\main.cpp" />
     <ClCompile Include="..\Material.cpp" />
     <ClCompile Include="..\Math.cpp" />
     <ClCompile Include="..\Mesh.cpp" />
     <ClCompile Include="..\Model.cpp" />
     <ClCompile Include="..\Object.cpp" />
+    <ClCompile Include="..\Shader.cpp" />
     <ClCompile Include="..\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>
@@ -158,12 +162,14 @@
     <ClInclude Include="Camera.h" />
     <ClInclude Include="Globel.h" />
     <ClInclude Include="graphic.h" />
+    <ClInclude Include="Light.h" />
     <ClInclude Include="Material.h" />
     <ClInclude Include="Math.h" />
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Object.h" />
     <ClInclude Include="setting.h" />
+    <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

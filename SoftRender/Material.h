@@ -6,7 +6,7 @@ public:
 	glm::vec4 Specular;
 	int Gloss;
 	Shader *shader;
-	Texture* MainTex;
+	Texture* MainTex =nullptr;
 
 	Material();
 	Material(const glm::vec4& color, const glm::vec4& specular, const int& gloss);

@@ -16,7 +16,7 @@ bool FaceCulling(const glm::vec4 &v1,const glm::vec4 &v2,const glm::vec4 &v3) {
 	glm::vec3 tmp2 = glm::vec3(v3.x - v1.x, v3.y - v1.y, v3.z - v1.z);
 	glm::vec3 normal = glm::normalize(glm::cross(tmp1, tmp2));
 
-	return glm::dot(normal, glm::vec3(0, 0, 1))< 0;  //返回1则证明为正面
+	return glm::dot(normal, glm::vec3(0, 0, 1))>= 0;  //返回1则证明为正面
 }
 
 bool ViewCull(const glm::vec4& v1, const glm::vec4& v2, const glm::vec4& v3) {
@@ -63,8 +63,7 @@ void DrawObject(Object &obj) {
 		
 	}
 	
-	Material *currentMat =&obj.material;
-	
+	currentMat =&obj.material;
 	for (int i = 0; i < obj.mesh.EBO.size(); i += 3) {
 		Vertex p1, p2, p3;
 		p1 = obj.mesh.VBO[obj.mesh.EBO[i]];
@@ -88,7 +87,7 @@ void DrawObject(Object &obj) {
 		if (!ViewCull(v1.windowPos, v2.worldPos, v3.windowPos)) {
 			continue;
 		}
-		if (!FaceCulling(v1.windowPos, v2.windowPos, v3.windowPos)) {
+	    if (!FaceCulling(v1.windowPos, v2.windowPos, v3.windowPos)) {
 			continue;
 		}
 	
@@ -96,30 +95,33 @@ void DrawObject(Object &obj) {
 		v2.windowPos =  ViewPortMatrix * v2.windowPos;
 		v3.windowPos =  ViewPortMatrix * v3.windowPos;
 		
-		std::thread st0(ScanLineTriangle, v1, v2, v3, 1);
-		std::thread st1(ScanLineTriangle, v1, v2, v3, 0);
-		std::thread st2(ScanLineTriangle, v1, v2, v3, 2);
+		//std::thread st0(ScanLineTriangle, v1, v2, v3, 1);
+		//std::thread st1(ScanLineTriangle, v1, v2, v3, 0);
+		//std::thread st2(ScanLineTriangle, v1, v2, v3, 2);
 	// 	std::thread st3(ScanLineTriangle, v1, v2, v3, 1);
 	//	std::thread st4(ScanLineTriangle, v1, v2, v3, 4);
 	//	std::thread st5(ScanLineTriangle, v1, v2, v3, 5);
 	//	std::thread st6(ScanLineTriangle, v1, v2, v3, 6);
 		//std::thread st7(ScanLineTriangle, v1, v2, v3, 7);
-		st0.join();
-		st1.join();
-		st2.join();
+		//st0.join();
+	//	st1.join();
+	//	st2.join();
 	 //  st3.join();
 	 //	st4.join();
 	//	st5.join();
 	//	st6.join();
 		//st7.join();
-		//ScanLineTriangle(v1, v2, v3);
 
+	
+			ScanLineTriangle(v1, v2, v3);
+	
 
 	}
 }
 
 void DrawModel(Model &model) {
 	for (int i = 0; i < model.objects.size(); i++) {
+	
 		DrawObject(model.objects[i]);		
 	}
 }
@@ -127,27 +129,18 @@ void DrawModel(Model &model) {
 
 
 void  Draw(SDL_Renderer* gRenderer, Shader shader, FrameBuffer FrontBuffer, const int SCREEN_WIDTH,const int SCREEN_HEIGHT) {
-	
-	for (int i = 0; i < SCREEN_HEIGHT; i++) {
-	
-			for (int k = 0; k < SCREEN_WIDTH; k++) {
-			
+	for (int i = 0; i < SCREEN_HEIGHT; i++) {		
+			for (int k = 0; k < SCREEN_WIDTH; k++) {			
 					if (k < 0 || k > SCREEN_WIDTH || i < 0 || i > SCREEN_HEIGHT)
 						return;
-
-
-					int xy = i * SCREEN_WIDTH + k;
-					if (FrontBuffer.colorBuffer[xy * 4] == 75) {
-						continue;
-					}
-					else {
-						SDL_SetRenderDrawColor(gRenderer, FrontBuffer.colorBuffer[xy * 4], FrontBuffer.colorBuffer[xy * 4 + 1], FrontBuffer.colorBuffer[xy * 4 + 2], FrontBuffer.colorBuffer[xy * 4 + 3]);
+						int xy = 4 * (i * SCREEN_WIDTH + k);
+						char* p = FrontBuffer.colorBuffer.data();
+						if (*(p + xy) == 75) {
+							continue;
+						}
+						SDL_SetRenderDrawColor(gRenderer, *(p + xy), *(p + xy+1), *(p + xy+2), *(p + xy+3));
 						//SDL_SetRenderDrawColor(gRenderer, shader.FragmentShader(v).x, shader.FragmentShader(v).y, shader.FragmentShader(v).z, shader.FragmentShader(v).w);
-						SDLDrawPixel(k, i);
-					
-
-				
-			}
+						SDLDrawPixel(k, i);			
 		}
 	}
 }
@@ -169,7 +162,7 @@ void Draw2(SDL_Renderer* gRenderer, Shader shader, FrameBuffer FrontBuffer, cons
 					continue;
 				}
 				else {
-					SDL_SetRenderDrawColor(gRenderer, FrontBuffer.colorBuffer[xy * 4], FrontBuffer.colorBuffer[xy * 4 + 1], FrontBuffer.colorBuffer[xy * 4 + 2], FrontBuffer.colorBuffer[xy * 4 + 3]);
+					SDL_SetRenderDrawColor(gRenderer, 255 * FrontBuffer.colorBuffer[xy * 4], 255 * FrontBuffer.colorBuffer[xy * 4 + 1], 255 * FrontBuffer.colorBuffer[xy * 4 + 2], 255 * FrontBuffer.colorBuffer[xy * 4 + 3]);
 					//SDL_SetRenderDrawColor(gRenderer, shader.FragmentShader(v).x, shader.FragmentShader(v).y, shader.FragmentShader(v).z, shader.FragmentShader(v).w);
 					SDLDrawPixel(w, j);
 				
@@ -179,7 +172,8 @@ void Draw2(SDL_Renderer* gRenderer, Shader shader, FrameBuffer FrontBuffer, cons
 	}
 }
 
-void MyDraw(V2F &v,SDL_Renderer* gRenderer, Shader& shader, FrameBuffer& FrontBuffer, Texture texture) {
-	 SDL_SetRenderDrawColor(gRenderer, 255*shader.FragmentShader(v,texture).x, 255 * shader.FragmentShader(v, texture).y, 255 * shader.FragmentShader(v, texture).z, 255 * shader.FragmentShader(v, texture).w);
+void MyDraw(V2F &v) {
+	 int xy = v.windowPos.x * SCREEN_WIDTH + v.windowPos.y;
+	 SDL_SetRenderDrawColor(gRenderer,255 * FrontBuffer->colorBuffer[4 * xy], 255 * FrontBuffer->colorBuffer[4 * xy +1], 255 * FrontBuffer->colorBuffer[ 4 * xy +2], 255 * FrontBuffer->colorBuffer[ 4 * xy + 3]);
 	 SDLDrawPixel(v.windowPos.x, v.windowPos.y);
 }
