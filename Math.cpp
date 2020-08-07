@@ -48,6 +48,15 @@ glm::mat4 GetPerspectiveMatrix(const float& fovy, const float& aspect, const flo
 	result[3][2] = (-2.0f * n * f) / (f - n);
 	return result;
 }
+glm::mat4 GetPerspectiveMatrixO(const float& size, const float& aspect, const float& n, const float& f) {
+	glm::mat4 result = glm::mat4(0.0f);
+	result[0][0] = 1.0f / (size * aspect);
+	result[1][1] = 1.0f / size;
+	result[2][2] = -2.0f / (f - n);
+	result[3][2] = -(f + n) / (f - n);
+	result[3][3] = 1.0f;
+	return result;
+} 
 
 void ViewingFrustumPlanes(std::vector<glm::vec4>& result, const glm::mat4& vp) {
 		//×ó²à

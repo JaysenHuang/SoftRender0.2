@@ -3,7 +3,7 @@
 
 
 
-
+Camera::Camera() = default;
 Camera::Camera(glm::vec3 position= glm::vec3(0.0f,0.0f,1.0f),
 	glm::vec3 up =glm::vec3(0.0f,1.0f,0.0f),
 	glm::vec3 lookat=glm::vec3(0.0f,0.0f,0.0f),
@@ -44,6 +44,11 @@ glm::mat4 Camera::ViewMatrix() {
 glm::mat4 Camera::PerspectiveMatrix() {
 	
 	return GetPerspectiveMatrix(Fov, Aspect, 0.3f, 100);
+}
+
+glm::mat4 Camera::PerspectiveMatrixO() {
+
+	return GetPerspectiveMatrixO(Size,Aspect,N,F);
 }
 
 void Camera::UpdateAspect(int w, int h) {

@@ -7,6 +7,7 @@
 #include"SoftRender/Light.h"
 #include"SoftRender/Model.h"
 #include<gdiplus.h>
+#include"SoftRender/shadow.h"
 //Screen dimension constants
 
 const int SCREEN_WIDTH = 1280;
@@ -18,16 +19,18 @@ SDL_Renderer* gRenderer = NULL;
 Shader shader;
 Material* currentMat;
 FrameBuffer* FrontBuffer;
+FrameBuffer* ShadowBuffer;
 DirectionLight *dirLight =NULL;
 PointLight* pointLight =NULL;
 SpotLight* spotLight=NULL;
+Shadow* shadow = NULL;
 glm::mat4 ViewPortMatrix = glm::mat4(1.0f);
 std::mutex mx;
-Camera camera(glm::vec3(0,0,10),glm::vec3(0,1,0),glm::vec3(0,0,-1), glm::radians(60.0f),SCREEN_WIDTH,SCREEN_HEIGHT);
+Camera camera(glm::vec3(0,3,10),glm::vec3(0,1,0),glm::vec3(0,0,-1), glm::radians(60.0f),SCREEN_WIDTH,SCREEN_HEIGHT);
 FrameBuffer* BackBuffer;
 Texture texture("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\MySoftRender\\SoftRender\\Assets\\car.tga");
 Texture texture2("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\MySoftRender\\SoftRender\\Assets\\wood02.jpg");
-
+bool onetime = true;
 
 
 int fps =0;
@@ -53,19 +56,35 @@ void ScanLine(const V2F& left, const V2F& right) {
         V2F v = V2F::lerp(left, right, (float)i / length);
         v.windowPos.x = left.windowPos.x + i;
         v.windowPos.y = left.windowPos.y;
+        float depth = 1;
 
-
-
-        float depth = FrontBuffer->GetDepth(v.windowPos.x, v.windowPos.y);
-
+        if (onetime) {
+            depth = ShadowBuffer->GetDepth(v.windowPos.x, v.windowPos.y);
+            
+        }
+        else {
+            depth = FrontBuffer->GetDepth(v.windowPos.x, v.windowPos.y);
+        }
         //  FrontBuffer.ClearDepthBuffer(v.windowPos.x, v.windowPos.y);
         if (v.windowPos.z < depth) {
+           
             float z = v.Z;
             v.worldPos /= z;
             v.texcoord /= z;
             v.color /= z;
-            v.normal /= z;
-            FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y,shader.FragmentShader(v));
+            v.normal /= z; 
+            
+            if (onetime) {     
+                ShadowBuffer->WriteDepth(v.windowPos.x, v.windowPos.y, v.windowPos.z);
+            //    std::cout << ShadowBuffer->depthBuffer[v.windowPos.y * SCREEN_WIDTH + v.windowPos.x] << std::endl;
+            }
+            glm::vec4 color = shader.FragmentShader(v);
+            if (shadow->IsInShadow(v)) {
+                FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y, color *glm::vec4(0.2,0.15,0.15,1));
+            }
+            else {
+                FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y, color);
+            }
            // MyDraw(v);
              //SDL_SetRenderDrawColor(gRenderer, shader.FragmentShader(v, texture).x, shader.FragmentShader(v, texture).y, shader.FragmentShader(v, texture).z, shader.FragmentShader(v, texture).w);
               //SDLDrawPixel(v.windowPos.x, v.windowPos.y);
@@ -140,6 +159,7 @@ int main(int argc, char* args[])
     else
     {
         {
+            
             //Main loop flag
             bool quit = false;
             
@@ -149,6 +169,7 @@ int main(int argc, char* args[])
          //   texture.LoadTexture("GO");
             FrontBuffer = new FrameBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
             BackBuffer = new FrameBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
+            ShadowBuffer = new FrameBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
           /*  int width, height, nrChannels;
             unsigned char* data = stbi_load("C:\\Users\\jiasheng.huang\\Desktop\\\MySoftRender\\IMG_0093.PNG", &width, &height, &nrChannels, 0);
             if (data)
@@ -172,8 +193,7 @@ int main(int argc, char* args[])
           
           // setViewMatrix(GetViewMatrix(glm::vec3(0, 0, 10), glm::vec3(0, 0, -1), glm::vec3(1, 0, 0), glm::vec3(0, 1, 0)));
           // setProjectMatrix(GetPerspectiveMatrix(glm::radians(60.0f), (float)SCREEN_WIDTH / SCREEN_HEIGHT, 0.3f, 500));
-		    FrontBuffer->Resize(SCREEN_WIDTH, SCREEN_HEIGHT);
-
+		    
         //»æÖÆµã
 	    //	Vertex V1(glm::vec3(-0.5, -0.5, 0), glm::vec4(255, 0, 0, 0), glm::vec2(0,0), glm::vec3(0, 0,0));
 		//	Vertex V2(glm::vec3(0.5, 0.5, 0), glm::vec4(0, 255, 0, 0), glm::vec2(0, 0), glm::vec3(0, 0, 0));
@@ -233,6 +253,15 @@ int main(int argc, char* args[])
           dirLight->Color=glm::vec3(0,1,0);
          pointLight->Color = glm::vec3(1, 0, 0);
 
+         shadow = new Shadow(dirLight, Ground);
+     //    shadow->Fit2Scene(Ground);
+         ShadowBuffer->ClearDepthBuffer();
+         setViewMatrix(shadow->LightSpaceCam.ViewMatrix());
+         setProjectMatrix(shadow->LightSpaceCam.PerspectiveMatrix());      
+         DrawModel(model);
+         DrawObject(Ground);
+         std::cout << onetime << std::endl;
+         onetime = false;
             while (!quit)
             {         
                 
@@ -318,7 +347,7 @@ int main(int argc, char* args[])
                 camera.UpdateCameraVectors();
                 //fps
                 fps++;
-              
+                
               
                 //Clear screen
                 //std::cout << fps/(float)t1 << std::endl;
@@ -345,10 +374,10 @@ int main(int argc, char* args[])
 
 
 
-              DrawModel(model);
+             DrawModel(model);
              DrawObject(Ground);
 
-#pragma omp parallel for num_threads(4) 
+#pragma omp parallel for num_threads(2) 
               for (int i = 0; i < SCREEN_HEIGHT; i++) {      
                   for (int k = 0; k < SCREEN_WIDTH; k++) {
                       int xy = 4 * (i * SCREEN_WIDTH + k);
@@ -356,6 +385,7 @@ int main(int argc, char* args[])
                      if (*(p + xy) == 75) {
                          continue;
                       }
+                     
                       SDL_SetRenderDrawColor(gRenderer, *(p + xy), *(p + xy + 1), *(p + xy + 2), *(p + xy + 3));
                       SDLDrawPixel(k, i);
 

@@ -155,6 +155,7 @@
     <ClCompile Include="..\Model.cpp" />
     <ClCompile Include="..\Object.cpp" />
     <ClCompile Include="..\Shader.cpp" />
+    <ClCompile Include="..\Shadow.cpp" />
     <ClCompile Include="..\Texture.cpp" />
   </ItemGroup>
   <ItemGroup>

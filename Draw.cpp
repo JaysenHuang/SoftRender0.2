@@ -83,11 +83,10 @@ void DrawObject(Object &obj) {
 		PerspectiveDivision(v1);
 		PerspectiveDivision(v2);
 		PerspectiveDivision(v3);
-
-		if (!ViewCull(v1.windowPos, v2.worldPos, v3.windowPos)) {
+	if (!ViewCull(v1.windowPos, v2.windowPos, v3.windowPos)) {
 			continue;
 		}
-	    if (!FaceCulling(v1.windowPos, v2.windowPos, v3.windowPos)) {
+	   if (!FaceCulling(v1.windowPos, v2.windowPos, v3.windowPos)) {
 			continue;
 		}
 	

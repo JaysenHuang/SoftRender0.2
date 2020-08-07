@@ -29,7 +29,7 @@ extern PointLight *pointLight;
 
 extern class SpotLight;
 
-extern SpotLight* spotLight;
+extern SpotLight *spotLight;
 
 extern class Shader;
 
@@ -52,4 +52,8 @@ extern class FrameBuffer;
 extern FrameBuffer* FrontBuffer ;
 
 extern FrameBuffer *BackBuffer;
+
+extern FrameBuffer* ShadowBuffer;
+
+extern glm::mat4 ViewPortMatrix;
 #endif

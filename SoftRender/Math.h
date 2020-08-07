@@ -11,5 +11,6 @@ float Lerp(const float& f1, const float& f2, float factor);
 glm::mat4 GetViewPortMatrix(int ox, int oy, int width, int height);
 glm::mat4 GetViewMatrix(glm::vec3 pos,glm::vec3 front,glm::vec3 right,glm::vec3 up);
 glm::mat4 GetPerspectiveMatrix(const float& fovy, const float& aspect, const float n, const float& f);
+glm::mat4 GetPerspectiveMatrixO(const float& size, const float& aspect, const float& n, const float& f);
 void ViewingFrustumPlanes(std::vector<glm::vec4> &result, const glm::mat4 &vp);
 bool Point2Plane(glm::vec4& p, glm::vec3& v);
