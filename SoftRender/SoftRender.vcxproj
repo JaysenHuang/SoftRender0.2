@@ -154,6 +154,7 @@
     <ClCompile Include="..\Mesh.cpp" />
     <ClCompile Include="..\Model.cpp" />
     <ClCompile Include="..\Object.cpp" />
+    <ClCompile Include="..\Pbr.cpp" />
     <ClCompile Include="..\Shader.cpp" />
     <ClCompile Include="..\Shadow.cpp" />
     <ClCompile Include="..\Texture.cpp" />
@@ -169,6 +170,7 @@
     <ClInclude Include="Mesh.h" />
     <ClInclude Include="Model.h" />
     <ClInclude Include="Object.h" />
+    <ClInclude Include="Pbr.h" />
     <ClInclude Include="setting.h" />
     <ClInclude Include="Shader.h" />
     <ClInclude Include="Texture.h" />

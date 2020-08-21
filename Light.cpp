@@ -11,11 +11,11 @@ Light::Light(const glm::vec3& pos = glm::vec3(0, 0, 0),
 		Direction(dir),
 		Intensity(i){}
 
-DirectionLight::DirectionLight(const glm::vec3& dir = glm::normalize(glm::vec3(0, -1, 1)),
+DirectionLight::DirectionLight(const glm::vec3& dir = glm::normalize(glm::vec3(1, 1, 1)),
 	const glm::vec3& color = glm::vec3(1, 1, 1),
 	const glm::vec3& specular = glm::vec3(1, 1, 1),
 	const float& i = 0.5f) {
-	Position = glm::vec3(-2.5,2.5, -2.5);
+	Position = glm::vec3(-2.5,2.5, 2.5);
 	Color = color;
 	Specular = specular;
 	Direction = dir;
@@ -29,15 +29,23 @@ DirectionLight::~DirectionLight() = default;
 	const glm::vec3& albedo
 )
 {
-	 float diff = glm::max(glm::dot(worldNormal, -Direction), 0.0f);
+	/* float diff = glm::max(glm::dot(worldNormal, -Direction), 0.0f);
 	glm::vec3 reflectDir = glm::normalize(reflect(Direction, worldNormal));
 	float spec =pow(glm::max(glm::dot(worldViewDir, reflectDir), 0.0f), currentMat->Gloss);
 	
 	glm::vec3 diffuse = Color * diff * albedo;
 	glm::vec3 specular = Specular * spec;
-
-	glm::vec3 result = (diffuse + specular) * Intensity;
-	return result;
+	glm::vec3 result = (diffuse + specular) * Intensity;*/
+	glm::vec3 lightDir = glm::normalize(Position);
+	glm::vec3 halfDirection = glm::normalize(worldViewDir + lightDir);
+    float NdotL = glm::clamp(glm::dot(worldNormal, lightDir),0.0f,1.0f);
+	float LdotH = glm::clamp(glm::dot(lightDir, halfDirection), 0.0f, 1.0f);
+	float NdotV = abs(dot(worldNormal, worldViewDir));
+	float NdotH = glm::clamp(glm::dot(worldNormal, halfDirection), 0.0f, 1.0f);
+	float VdotH = glm::clamp(glm::dot(worldViewDir, halfDirection), 0.0f, 1.0f);
+	pbr = new Pbr(NdotH, NdotV, NdotL, LdotH,VdotH, glm::vec3(0.024f, 0.024f, 0.024f), albedo, 0,1, Color * Intensity);
+	
+	return pbr->result;
 }
 
  PointLight::PointLight(

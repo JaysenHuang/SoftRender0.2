@@ -2,6 +2,7 @@
 #include"Globel.h"
 #include"Math.h"
 #include"Material.h"
+#include"Pbr.h"
 class Light {
 public :
 	glm::vec3 Position;
@@ -9,6 +10,7 @@ public :
 	glm::vec3 Specular;
 	glm::vec3 Direction;
 	float Intensity;
+	
 
 	virtual ~Light() {
 	}

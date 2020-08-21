@@ -39,7 +39,11 @@ extern class Camera;
 
 extern Camera camera;
 
-const glm::vec3 Ambient = glm::vec3(0.3, 0.3, 0.3);
+extern class Pbr;
+
+extern Pbr *pbr;
+
+const glm::vec3 Ambient = glm::vec3(0, 0, 0);
 
 
 extern SDL_Renderer* gRenderer;
@@ -56,4 +60,6 @@ extern FrameBuffer *BackBuffer;
 extern FrameBuffer* ShadowBuffer;
 
 extern glm::mat4 ViewPortMatrix;
+
+
 #endif

@@ -66,7 +66,7 @@ glm::vec4 Shader::FragmentShader(const V2F & v) {
 	if (spotLight) {
 		result += spotLight->CalcSpotLight(v.worldPos, worldNormal, worldViewDir, albedo);
 	}
-	result = glm::min((result),glm::vec3(1,1,1));
+	result = glm::clamp(result, 0.0f, 1.0f);
 	return glm::vec4(result, 1.0);
 }
 

@@ -24,9 +24,10 @@ DirectionLight *dirLight =NULL;
 PointLight* pointLight =NULL;
 SpotLight* spotLight=NULL;
 Shadow* shadow = NULL;
+Pbr* pbr = NULL;
 glm::mat4 ViewPortMatrix = glm::mat4(1.0f);
 std::mutex mx;
-Camera camera(glm::vec3(0,3,10),glm::vec3(0,1,0),glm::vec3(0,0,-1), glm::radians(60.0f),SCREEN_WIDTH,SCREEN_HEIGHT);
+Camera camera(glm::vec3(0,0,0.5),glm::vec3(0,1,0),glm::vec3(0,0,-1), glm::radians(60.0f),SCREEN_WIDTH,SCREEN_HEIGHT);
 FrameBuffer* BackBuffer;
 Texture texture("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\MySoftRender\\SoftRender\\Assets\\car.tga");
 Texture texture2("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\MySoftRender\\SoftRender\\Assets\\wood02.jpg");
@@ -80,7 +81,8 @@ void ScanLine(const V2F& left, const V2F& right) {
             }
             glm::vec4 color = shader.FragmentShader(v);
             if (shadow->IsInShadow(v)) {
-                FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y, color *glm::vec4(0.2,0.15,0.15,1));
+                FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y, color);
+           //     FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y, color *glm::vec4(0.2,0.15,0.15,1));
             }
             else {
                 FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y, color);
@@ -206,14 +208,14 @@ int main(int argc, char* args[])
             Material mat2;
             mat2.SetShader(&shader);
             mat2.SetTexture(&texture2);
-            mat.SetTexture(&texture);
+           // mat.SetTexture(&texture);
             mat.Color = glm::vec4(1, 1, 1,1);
           //  Material mat2;
          //   mat2.SetShader(&shader);
          //   Texture texture2("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\MySoftRender\\SoftRender\\Assets\\Lisa0.tga");
           //  mat2.SetTexture(&texture2);
 
-            Model model("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\MySoftRender\\SoftRender\\Assets\\tong.obj");
+            Model model("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\SoftRender0.2\\SoftRender\\Assets\\sphere.obj");
             model.SetMaterial(0, mat);
         //    model.SetMaterial(1, mat2);
         //    model.SetMaterial(2, mat);
@@ -246,12 +248,12 @@ int main(int argc, char* args[])
             //While application is running
           std::thread t(ShowFps, gWindow);
           t.detach();
-         dirLight = new DirectionLight(glm::vec3(1, -1, 1), glm::vec3(1, 1, 1), glm::vec3(0.5f, 0.5f, 0.5f),0.25f);
-         pointLight = new PointLight(glm::vec3(1, 1, 1), glm::vec3(1, 0, 0), glm::vec3(1, 1, 1), 0.25f, 1.0f, 0.09f, 0.032f);
-          spotLight = new SpotLight(glm::vec3(0,3, 0), glm::vec3(0, -1, 0), glm::vec3(0, 0, 1), glm::vec3(0.5, 0.5, 0.5), 0.25f, 1.0f, 0.09f, 0.032f,13.0f,15.5f);
+         dirLight = new DirectionLight(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1), glm::vec3(1, 1,1),1.0f);
+    //     pointLight = new PointLight(glm::vec3(1, 1, 1), glm::vec3(1, 0, 0), glm::vec3(1, 1, 1), 0.25f, 1.0f, 0.09f, 0.032f);
+     //     spotLight = new SpotLight(glm::vec3(0,3, 0), glm::vec3(0, -1, 0), glm::vec3(0, 0, 1), glm::vec3(0.5, 0.5, 0.5), 0.25f, 1.0f, 0.09f, 0.032f,13.0f,15.5f);
  
-          dirLight->Color=glm::vec3(0,1,0);
-         pointLight->Color = glm::vec3(1, 0, 0);
+         // dirLight->Color=glm::vec3(0,1,0);
+      //   pointLight->Color = glm::vec3(1, 0, 0);
 
          shadow = new Shadow(dirLight, Ground);
      //    shadow->Fit2Scene(Ground);
@@ -353,9 +355,9 @@ int main(int argc, char* args[])
                 //std::cout << fps/(float)t1 << std::endl;
 
 
-               SDL_SetRenderDrawColor(gRenderer, 75, 75, 75, 255);
+               SDL_SetRenderDrawColor(gRenderer, 35, 35, 35, 255);
                 SDL_RenderClear(gRenderer);
-                FrontBuffer->ClearColorBuffer(glm::vec4(75, 75, 75, 255));
+                FrontBuffer->ClearColorBuffer(glm::vec4(35, 35, 35, 255));
                 FrontBuffer->ClearDepthBuffer();
              //   ScanLineTriangle(o1, o2, o3);
 				
@@ -375,14 +377,14 @@ int main(int argc, char* args[])
 
 
              DrawModel(model);
-             DrawObject(Ground);
+            // DrawObject(Ground);
 
-#pragma omp parallel for num_threads(2) 
+//#pragma omp parallel for num_threads(2) 
               for (int i = 0; i < SCREEN_HEIGHT; i++) {      
                   for (int k = 0; k < SCREEN_WIDTH; k++) {
                       int xy = 4 * (i * SCREEN_WIDTH + k);
                       char* p = FrontBuffer->colorBuffer.data();
-                     if (*(p + xy) == 75) {
+                     if (*(p + xy) == 35) {
                          continue;
                       }
                      

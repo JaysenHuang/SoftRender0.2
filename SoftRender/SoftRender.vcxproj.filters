@@ -54,6 +54,9 @@
     <ClCompile Include="..\Shadow.cpp">
       <Filter>源文件</Filter>
     </ClCompile>
+    <ClCompile Include="..\Pbr.cpp">
+      <Filter>源文件</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="graphic.h">
@@ -93,6 +96,9 @@
       <Filter>头文件</Filter>
     </ClInclude>
     <ClInclude Include="Shader.h">
+      <Filter>头文件</Filter>
+    </ClInclude>
+    <ClInclude Include="Pbr.h">
       <Filter>头文件</Filter>
     </ClInclude>
   </ItemGroup>
