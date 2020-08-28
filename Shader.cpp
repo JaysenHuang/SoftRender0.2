@@ -18,12 +18,16 @@ V2F Shader::VertexShader(const Vertex & a2v) {
 	o.worldPos = ModelMatrix * a2v.position;
 	// PVM*v
 	o.windowPos = ProjectMatrix * ViewMatrix * o.worldPos;
+	o.color = a2v.color;
+	o.normal = glm::normalize(NormalMatrix * a2v.normal);
+	glm::vec3 T = glm::normalize(NormalMatrix * a2v.tangent);
+	glm::vec3 B = glm::normalize(glm::cross(T, o.normal));
+	o.texcoord = a2v.texcoord;
+	o.TBN = glm::mat3(T, B, o.normal);
+//	o.Z = 1 / o.windowPos.w;
+//	o.worldPos = o.worldPos * o.Z;
+	
 
-	o.Z = 1 / o.windowPos.w;
-	o.worldPos = o.worldPos * o.Z;
-	o.color = a2v.color * o.Z;
-	o.normal = a2v.normal * o.Z;
-	o.texcoord = a2v.texcoord * o.Z;
 	return o;
 }
 
@@ -47,18 +51,25 @@ void Shader::setProjectMatrix(const glm::mat4 & project) {
 
 glm::vec4 Shader::FragmentShader(const V2F & v) {
 	glm::vec4 albedo = currentMat->Color;
+	glm::vec4 smbe = glm::vec4(0, 0, 1, 1);
 	if (!currentMat->MainTex) {
 		albedo = currentMat->Color;
 	}
 	else {
 		albedo = currentMat->MainTex->Sample2D(v.texcoord) * currentMat->Color;
 	}
-	glm::vec3 worldNormal = glm::normalize(v.normal);
+	if (currentMat->SMBETex) {
+		smbe = currentMat->SMBETex->Sample2D(v.texcoord);
+	}
+	//std::cout << v.TBN[0].x;
+	//glm::vec3 worldNormal = glm::normalize(v.normal);
+	glm::vec3 worldNormal = glm::normalize(v.TBN*glm::normalize(currentMat->SampleNormal(v.texcoord)*2.0f-1.0f));
+	
 	glm::vec3 worldViewDir = glm::normalize(camera.Position - glm::vec3(v.worldPos));
 	
 	glm::vec3 result = Ambient * glm::vec3(albedo);
 	if (dirLight) {
-		result += dirLight->CalcDirLight(worldNormal, worldViewDir, albedo);
+		result += dirLight->CalcDirLight(worldNormal, worldViewDir, albedo,smbe);
 	}
 	if (pointLight) {
 		result += pointLight->CalcPointLight(v.worldPos,worldNormal,worldViewDir,albedo);
@@ -66,7 +77,7 @@ glm::vec4 Shader::FragmentShader(const V2F & v) {
 	if (spotLight) {
 		result += spotLight->CalcSpotLight(v.worldPos, worldNormal, worldViewDir, albedo);
 	}
-	result = glm::clamp(result, 0.0f, 1.0f);
+
 	return glm::vec4(result, 1.0);
 }
 

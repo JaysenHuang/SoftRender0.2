@@ -1,1 +1,11 @@
-﻿  SoftRender.vcxproj -> C:\Users\jiasheng.huang\Documents\GitHub\SoftRender0.2\Debug\SoftRender.exe
+﻿  Shader.cpp
+C:\Users\jiasheng.huang\Documents\GitHub\SoftRender0.2\SoftRender\Globel.h(25,22): warning C4091: “extern ”: 没有声明变量时忽略“Material”的左侧
+C:\Users\jiasheng.huang\Documents\GitHub\SoftRender0.2\SoftRender\Globel.h(29,28): warning C4091: “extern ”: 没有声明变量时忽略“DirectionLight”的左侧
+C:\Users\jiasheng.huang\Documents\GitHub\SoftRender0.2\SoftRender\Globel.h(33,24): warning C4091: “extern ”: 没有声明变量时忽略“PointLight”的左侧
+C:\Users\jiasheng.huang\Documents\GitHub\SoftRender0.2\SoftRender\Globel.h(37,23): warning C4091: “extern ”: 没有声明变量时忽略“SpotLight”的左侧
+C:\Users\jiasheng.huang\Documents\GitHub\SoftRender0.2\SoftRender\Globel.h(41,20): warning C4091: “extern ”: 没有声明变量时忽略“Shader”的左侧
+C:\Users\jiasheng.huang\Documents\GitHub\SoftRender0.2\SoftRender\Globel.h(45,20): warning C4091: “extern ”: 没有声明变量时忽略“Camera”的左侧
+C:\Users\jiasheng.huang\Documents\GitHub\SoftRender0.2\SoftRender\Globel.h(49,17): warning C4091: “extern ”: 没有声明变量时忽略“Pbr”的左侧
+C:\Users\jiasheng.huang\Documents\GitHub\SoftRender0.2\SoftRender\Globel.h(61,25): warning C4091: “extern ”: 没有声明变量时忽略“FrameBuffer”的左侧
+C:\Users\jiasheng.huang\Documents\GitHub\SoftRender0.2\Shader.cpp(11,11): warning C4101: “texture”: 未引用的局部变量
+  SoftRender.vcxproj -> C:\Users\jiasheng.huang\Documents\GitHub\SoftRender0.2\Debug\SoftRender.exe

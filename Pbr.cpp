@@ -2,6 +2,8 @@
 //D
 
 Pbr::Pbr(float NdotH, float NdotV, float NdotL,float LdotH,float VdotH, glm::vec3 F0, glm::vec3 Albedo, float metalness,float roughness,glm::vec3 LightColor) {
+	F0 = Albedo * metalness + (1 - metalness) * F0;
+	roughness += 0.01;
 	float Kspec = F0.x;
 	float Kdiff = (1.0 - F0.x) * (1.0 - metalness);
 	//diffuse
@@ -9,7 +11,7 @@ Pbr::Pbr(float NdotH, float NdotV, float NdotL,float LdotH,float VdotH, glm::vec
 ///	float nlPow5 = glm::pow((1 - NdotL),5);
 	///float nvPow5 = glm::pow((1 - NdotV),5);
 	///glm::vec3 diffuse = (1 + (fd90 - 1) * nlPow5) * (1 + (fd90 - 1) * nvPow5) * LightColor;
-    
+
 	float K = (roughness + 1) * (roughness + 1) / 8;
 	float D = D_GGX_TR(NdotH, roughness);
 	float G = GeometrySmith(NdotV, NdotL, K);

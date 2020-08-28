@@ -15,7 +15,7 @@ DirectionLight::DirectionLight(const glm::vec3& dir = glm::normalize(glm::vec3(1
 	const glm::vec3& color = glm::vec3(1, 1, 1),
 	const glm::vec3& specular = glm::vec3(1, 1, 1),
 	const float& i = 0.5f) {
-	Position = glm::vec3(-2.5,2.5, 2.5);
+	Position = glm::vec3(-5, 5, 2.5);
 	Color = color;
 	Specular = specular;
 	Direction = dir;
@@ -26,7 +26,8 @@ DirectionLight::~DirectionLight() = default;
  glm::vec3 DirectionLight::CalcDirLight(
 	const glm::vec3& worldNormal,
 	const glm::vec3& worldViewDir,
-	const glm::vec3& albedo
+	const glm::vec3& albedo,
+	const glm::vec3& smbe
 )
 {
 	/* float diff = glm::max(glm::dot(worldNormal, -Direction), 0.0f);
@@ -43,7 +44,9 @@ DirectionLight::~DirectionLight() = default;
 	float NdotV = abs(dot(worldNormal, worldViewDir));
 	float NdotH = glm::clamp(glm::dot(worldNormal, halfDirection), 0.0f, 1.0f);
 	float VdotH = glm::clamp(glm::dot(worldViewDir, halfDirection), 0.0f, 1.0f);
-	pbr = new Pbr(NdotH, NdotV, NdotL, LdotH,VdotH, glm::vec3(0.024f, 0.024f, 0.024f), albedo, 0,1, Color * Intensity);
+	float roughness = 1.0 - smbe.r;
+	float metalness = smbe.g;
+	pbr = new Pbr(NdotH, NdotV, NdotL, LdotH,VdotH, glm::vec3(0.04f, 0.04f, 0.04f), albedo, metalness, roughness, Color * Intensity);
 	
 	return pbr->result;
 }

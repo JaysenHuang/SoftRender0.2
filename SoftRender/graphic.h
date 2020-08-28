@@ -27,7 +27,7 @@ class FrameBuffer {
 public:
 	int Width, Height;
 
-	std::vector<char> colorBuffer;
+	std::vector<unsigned char> colorBuffer;
 	std::vector<float> depthBuffer;
 	
 	
@@ -54,7 +54,7 @@ public:
 	glm::vec4 color;
 	glm::vec2 texcoord;
 	glm::vec3 normal;
-
+	glm::vec3 tangent;
 	Vertex();
 	~Vertex();
 
@@ -62,14 +62,16 @@ public:
 		const glm::vec4& _pos,
 		const glm::vec4& _color,
 		const glm::vec2& _tex,
-		const glm::vec3& _normal
+		const glm::vec3& _normal,
+		const glm::vec3& _tangent
 	);
 
 	Vertex(
 		const glm::vec3& _pos,
 		const glm::vec4& _color,
 		const glm::vec2& _tex,
-		const glm::vec3& _normal
+		const glm::vec3& _normal,
+		const glm::vec3& _tangent = glm::vec3(0, 0, 1)
 	);
 
 	Vertex(const Vertex& v);
@@ -82,6 +84,7 @@ public:
 	glm::vec4 color;
 	glm::vec2 texcoord;
 	glm::vec3 normal;
+	glm::mat3 TBN;
 	float Z;	
 	V2F();
 
@@ -92,7 +95,8 @@ public:
 		const glm::vec4& _pPos,
 		const glm::vec4& _color,
 		const glm::vec2& _tex,
-		const glm::vec3& _normal
+		const glm::vec3& _normal,
+		const glm::mat3& _tbn
 		
 	);
 
@@ -111,11 +115,11 @@ public:
 
 void ScanLine(const V2F& left, const V2F& right);
 
-void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3);
+void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i);
 
-void DownTriangle(const V2F& v1, const V2F& v2, const V2F& v3);
+void DownTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i);
 
-void ScanLineTriangle(const V2F& v1, const V2F& v2, const V2F& v3);
+void ScanLineTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i);
 
 void PerspectiveDivision(V2F& v);
 //void DrawMesh(const Mesh& mesh);

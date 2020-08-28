@@ -71,8 +71,8 @@
   <PropertyGroup Label="UserMacros" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'">
     <LinkIncremental>true</LinkIncremental>
-    <IncludePath>C:\Users\jiasheng.huang\Desktop\SDL2-2.0.12\include;$(IncludePath)</IncludePath>
-    <LibraryPath>C:\Users\jiasheng.huang\Desktop\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
+    <IncludePath>C:\Users\jiasheng.huang\Desktop\glfw\include;C:\Users\jiasheng.huang\Desktop\SDL2-2.0.12\include;$(IncludePath)</IncludePath>
+    <LibraryPath>C:\Users\jiasheng.huang\Desktop\glfw\lib-vc2019;C:\Users\jiasheng.huang\Desktop\SDL2-2.0.12\lib\x86;$(LibraryPath)</LibraryPath>
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
     <LinkIncremental>true</LinkIncremental>
@@ -95,7 +95,7 @@
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalDependencies>SDL2.lib;SDL2main.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalDependencies>glfw3.lib;opengl32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <HeapReserveSize>16000000</HeapReserveSize>
     </Link>
   </ItemDefinitionGroup>
@@ -146,6 +146,7 @@
   <ItemGroup>
     <ClCompile Include="..\Camera.cpp" />
     <ClCompile Include="..\Draw.cpp" />
+    <ClCompile Include="..\glad.c" />
     <ClCompile Include="..\graphic.cpp" />
     <ClCompile Include="..\Light.cpp" />
     <ClCompile Include="..\main.cpp" />

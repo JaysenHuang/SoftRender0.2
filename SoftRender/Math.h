@@ -1,6 +1,7 @@
 #pragma once
 #include"glm\glm\glm.hpp"
 #include"glm\glm\gtc\matrix_transform.hpp"
+#include"..\SoftRender\Globel.h"
 #include<vector>
 #include<iostream>
 
@@ -14,3 +15,6 @@ glm::mat4 GetPerspectiveMatrix(const float& fovy, const float& aspect, const flo
 glm::mat4 GetPerspectiveMatrixO(const float& size, const float& aspect, const float& n, const float& f);
 void ViewingFrustumPlanes(std::vector<glm::vec4> &result, const glm::mat4 &vp);
 bool Point2Plane(glm::vec4& p, glm::vec3& v);
+float saturate(const float& v);
+glm::mat3 GetNormalMatrix(const glm::mat4& model);
+void UpdateNormalMatrix();

@@ -25,7 +25,7 @@ void FrameBuffer::Resize(const int& w, const int& h) {
 }
 
 void FrameBuffer::ClearColorBuffer(const glm::vec4& color) {
-	char* p = colorBuffer.data();
+	unsigned char* p = colorBuffer.data();
 	for (int i = 0; i < Width * Height * 4; i += 4) {
 		*(p + i) = color.r;
 		*(p + i + 1) = color.g;
@@ -45,18 +45,13 @@ void FrameBuffer::ClearDepthBuffer() {
 }
 void FrameBuffer::WritePoint(const int x, const int y, const glm::vec4 color) {
 	if (x < 0 || x >= Width || y < 0 || y >= Height)
-		return;
-	int xy = 4*(y*Width +x);
-	int r, g, b, a;
-	r = color.x * 255;
-	g = color.y * 255;
-	b = color.z * 255;
-	a = color.w * 255;
-	char* p = colorBuffer.data();
-	*(p + xy) =r;
-	*(p + xy + 1) = g;
-	*(p + xy + 2) = b;
-	*(p + xy + 3) = a;
+			return;
+		int xy = (y * Width + x);
+		unsigned char * p = colorBuffer.data();
+		*(p + xy*4) = saturate(color.r) * 255;
+		*(p + xy*4 + 1) = saturate(color.g) * 255;
+		*(p + xy*4 + 2) = saturate(color.b) * 255;
+		*(p + xy*4 + 3) = saturate(color.a) * 255;
 	
 }
 
@@ -88,21 +83,21 @@ Vertex::Vertex(
 	const glm::vec4& _pos,
 	const glm::vec4& _color,
 	const glm::vec2& _tex,
-	const glm::vec3& _normal
+	const glm::vec3& _normal,
+	const glm::vec3& _tangent
 ) :
-	position(_pos), color(_color), texcoord(_tex), normal(_normal) {}
+	position(_pos), color(_color), texcoord(_tex), normal(_normal),tangent(_tangent) {}
 
 Vertex::Vertex(
 	const glm::vec3& _pos,
 	const glm::vec4& _color,
 	const glm::vec2& _tex,
-	const glm::vec3& _normal 
+	const glm::vec3& _normal,
+	const glm::vec3& _tangent 
 ) :
-	position(_pos, 1.0f), color(_color), texcoord(_tex), normal(_normal) {}
+	position(_pos, 1.0f), color(_color), texcoord(_tex), normal(_normal),tangent(_tangent) {}
 
-Vertex::Vertex(const Vertex& v):
-	position(v.position), color(v.color), texcoord(v.texcoord), normal(v.normal) {}
-
+Vertex::Vertex(const Vertex& v) :position(v.position), color(v.color), texcoord(v.texcoord), normal(v.normal), tangent(v.tangent) {}
 //Class V2F
 
 V2F::V2F() = default;
@@ -113,12 +108,13 @@ V2F::V2F(
 	const glm::vec4& _pPos,
 	const glm::vec4& _color,
 	const glm::vec2& _tex,
-	const glm::vec3& _normal
+	const glm::vec3& _normal,
+	const glm::mat3& _tbn
 ) :
-	worldPos(_wPos), windowPos(_pPos), color(_color), texcoord(_tex), normal(_normal) {}
+	worldPos(_wPos), windowPos(_pPos), color(_color), texcoord(_tex), normal(_normal), TBN(_tbn)  {}
 
 V2F::V2F(const V2F& v) :
-	worldPos(v.worldPos), windowPos(v.windowPos), color(v.color), texcoord(v.texcoord), normal(v.normal),Z(v.Z) {}
+	worldPos(v.worldPos), windowPos(v.windowPos), color(v.color), texcoord(v.texcoord), normal(v.normal), TBN(v.TBN),Z(v.Z) {}
 
 V2F V2F::lerp(const V2F& v1, const V2F& v2, const float& factor) {
 V2F result;
@@ -127,6 +123,7 @@ result.worldPos = Lerp(v1.worldPos, v2.worldPos, factor);
 result.color = Lerp(v1.color, v2.color, factor);
 result.normal = Lerp(v1.normal, v2.normal, factor);
 result.texcoord = Lerp(v1.texcoord, v2.texcoord, factor);
+result.TBN = v1.TBN;
 result.Z = Lerp(v1.Z, v2.Z, factor);
 return result;
 	}
@@ -135,14 +132,20 @@ return result;
 
 
 void PerspectiveDivision(V2F& v) {
-	
+
+	v.Z = 1 / v.windowPos.w;
 	v.windowPos /= v.windowPos.w;
 	v.windowPos.w = 1.0f;
-	v.windowPos.z = (v.windowPos.z +1.0f ) /2;
+	v.windowPos.z = (v.windowPos.z + 1.0) * 0.5;
+
+	v.worldPos *= v.Z;
+	v.normal *= v.Z;
+	v.texcoord *= v.Z;
+	v.color *= v.Z;
 }
 
 
-void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3) {
+void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3,int i) {
     V2F left, right, top;
     left = v1.windowPos.x > v2.windowPos.x ? v2 : v1;
     right = v1.windowPos.x > v2.windowPos.x ? v1 : v2;
@@ -151,7 +154,7 @@ void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3) {
     int dy = top.windowPos.y - left.windowPos.y;
     int nowY = top.windowPos.y;
     //从上往下插值
-	int i = cpu;
+	//int i = cpu;
 	switch (i){
 
 		case 0: {
@@ -328,14 +331,14 @@ void UpTriangle(const V2F& v1, const V2F& v2, const V2F& v3) {
   
 
 
-void DownTriangle(const V2F& v1, const V2F& v2, const V2F& v3) {
+void DownTriangle(const V2F& v1, const V2F& v2, const V2F& v3,int i) {
     V2F left, right, bottom;
     left = v1.windowPos.x > v2.windowPos.x ? v2 : v1;
     right = v1.windowPos.x > v2.windowPos.x ? v1 : v2;
     bottom = v3;
     int dy = left.windowPos.y - bottom.windowPos.y;
     int nowY = left.windowPos.y;
-	int i = cpu;
+	//int i = cpu;
     //从上往下插值
 	switch (i) {
 	case 0: {
@@ -511,7 +514,7 @@ void DownTriangle(const V2F& v1, const V2F& v2, const V2F& v3) {
 
 
 
-void ScanLineTriangle(const V2F& v1, const V2F& v2, const V2F& v3) {
+void ScanLineTriangle(const V2F& v1, const V2F& v2, const V2F& v3, int i) {
 
     std::vector<V2F> arr = { v1,v2,v3 };
     if (arr[0].windowPos.y > arr[1].windowPos.y) {
@@ -532,17 +535,17 @@ void ScanLineTriangle(const V2F& v1, const V2F& v2, const V2F& v3) {
     //arr[0] 在最下面  arr[2]在最上面
     //中间跟上面的相等，是底三角形
     if (arr[1].windowPos.y == arr[2].windowPos.y) {
-        DownTriangle(arr[1], arr[2], arr[0]);
+        DownTriangle(arr[1], arr[2], arr[0],i);
     }//顶三角形
     else if (arr[1].windowPos.y == arr[0].windowPos.y) {
-        UpTriangle(arr[1], arr[0], arr[2]);
+        UpTriangle(arr[1], arr[0], arr[2],i);
     }
     else {
         //插值求出中间点对面的那个点，划分为两个新的三角形
         float weight = (arr[2].windowPos.y - arr[1].windowPos.y) / (arr[2].windowPos.y - arr[0].windowPos.y);
         V2F newEdge = V2F::lerp(arr[2], arr[0], weight);
-        UpTriangle(arr[1], newEdge, arr[2]);
-        DownTriangle(arr[1], newEdge, arr[0]);
+        UpTriangle(arr[1], newEdge, arr[2],i);
+        DownTriangle(arr[1], newEdge, arr[0],i);
 
     }
 }

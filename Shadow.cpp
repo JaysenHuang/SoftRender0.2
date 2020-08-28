@@ -38,9 +38,9 @@ bool Shadow::IsVisibleToLight(V2F& v, DirectionLight *L) {
 	LightSpacePos.w = 1.0f;
 	LightSpacePos.z = (LightSpacePos.z + 1.0f) / 2;
 	LightSpacePos = ViewPortMatrix * LightSpacePos;
-
-	if (LightSpacePos.z-0.0003 > CurrentDepth(LightSpacePos.x, LightSpacePos.y)) {
-		//std::cout << LightSpacePos.z << std::endl;
+	//std::cout << LightSpacePos.z << std::endl;
+	if (LightSpacePos.z-0.001> CurrentDepth(LightSpacePos.x, LightSpacePos.y)) {
+		
 		return false;
 		
 	}

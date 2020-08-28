@@ -3,19 +3,19 @@
 #include "SoftRender\draw.h"
 #include<windows.h>
 #include <ctime>
-
+#include <string>
 #include"SoftRender/Light.h"
 #include"SoftRender/Model.h"
 #include<gdiplus.h>
 #include"SoftRender/shadow.h"
+
 //Screen dimension constants
 
 const int SCREEN_WIDTH = 1280;
 const int SCREEN_HEIGHT = 720;
-SDL_Window* gWindow = NULL;
-SDL_Event event;
-//The window renderer
-SDL_Renderer* gRenderer = NULL;
+
+
+
 Shader shader;
 Material* currentMat;
 FrameBuffer* FrontBuffer;
@@ -25,16 +25,96 @@ PointLight* pointLight =NULL;
 SpotLight* spotLight=NULL;
 Shadow* shadow = NULL;
 Pbr* pbr = NULL;
+RenderMode renderMod = Fill;
 glm::mat4 ViewPortMatrix = glm::mat4(1.0f);
 std::mutex mx;
-Camera camera(glm::vec3(0,0,0.5),glm::vec3(0,1,0),glm::vec3(0,0,-1), glm::radians(60.0f),SCREEN_WIDTH,SCREEN_HEIGHT);
+Camera camera(glm::vec3(0,0,5),glm::vec3(0,1,0),glm::vec3(0,0,-1), glm::radians(60.0f),SCREEN_WIDTH,SCREEN_HEIGHT);
 FrameBuffer* BackBuffer;
-Texture texture("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\MySoftRender\\SoftRender\\Assets\\car.tga");
-Texture texture2("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\MySoftRender\\SoftRender\\Assets\\wood02.jpg");
+Texture texture("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\SoftRender0.2\\SoftRender\\Assets\\Stages_Gear_Operator_Diffuse.tga");
+Texture texture2("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\SoftRender0.2\\SoftRender\\Assets\\Stages_Gear_Operator_SMBE.tga");
+Texture texture3("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\SoftRender0.2\\SoftRender\\Assets\\Stages_Gear_Operator_Normal.tga");
+Material groundmat;
+glm::mat3 NormalMatrix;
+glm::mat4 ModelMatrix;
+//Texture smbetexture();
 bool onetime = true;
 
-
 int fps =0;
+
+void scroll_callback(GLFWwindow* window, double xoffset, double yoffset)
+{
+    //dw->camera->MoveUp(yoffset * 0.1);
+}
+
+void processInput(GLFWwindow* window)
+{
+    double xpos, ypos;
+    double newxpos, newypos;
+    int mode = fps*0.1 + 1.1;
+    if (glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS)
+        glfwSetWindowShouldClose(window, true);
+    if (glfwGetKey(window, GLFW_KEY_UP) == GLFW_PRESS) {
+        camera.RotatePitch(5.0/ mode);
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT) == GLFW_PRESS) {
+        camera.RotateYaw(5.0 / mode);
+    }
+    if (glfwGetKey(window, GLFW_KEY_RIGHT) == GLFW_PRESS) {
+        camera.RotateYaw(-5.0 / mode);
+    }
+    if (glfwGetKey(window, GLFW_KEY_DOWN) == GLFW_PRESS) {
+        camera.RotatePitch(-5.0 / mode);
+    }
+    if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) {
+        camera.MoveForward(0.1 / mode);
+    }
+    if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) {
+        camera.MoveForward(-0.1 / mode);
+    }
+    if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) {
+        camera.MoveRight(-0.1 / mode);
+    }
+    if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) {
+        camera.MoveRight(0.1 / mode);
+    }
+    if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) {
+        camera.MoveUp(0.1 / mode);
+    }
+    if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) {
+        camera.MoveUp(-0.1 / mode);
+    }
+    if (glfwGetKey(window, GLFW_KEY_P) == GLFW_PRESS) {
+        if (renderMod == Fill) {
+            renderMod = Line;
+       }
+        else {
+            renderMod = Fill;
+        }
+    }
+    if (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS) {
+        
+        glfwGetCursorPos(window, &xpos, &ypos);
+        Sleep(5);
+        glfwGetCursorPos(window, &newxpos, &newypos);
+        int movex = newxpos - xpos;
+        int movey = newypos - ypos;
+        camera.RotateYaw(-movex * 0.5f );
+        camera.RotatePitch(-movey * 0.5f );
+    }
+
+
+}
+
+void ShowFps(GLFWwindow* window) {
+
+    while (1) {
+        Sleep(1000);
+        std::string text = "YelloBao's SoftRender fps:" + std::to_string(fps);
+        glfwSetWindowTitle(window, text.c_str());
+        fps = 0;
+    }
+}
+/*
 void ShowFps(SDL_Window* gWindow) {
     while (1) {
         Sleep(1000);
@@ -44,15 +124,17 @@ void ShowFps(SDL_Window* gWindow) {
         fps = 0;
     }
 }
-void SDLDrawPixel(int x, int y)
+/*void SDLDrawPixel(int x, int y)
 {
     mx.lock();
     SDL_RenderDrawPoint(gRenderer, x, SCREEN_HEIGHT - 1 - y);
     mx.unlock();
-}
+}*/
+
 void ScanLine(const V2F& left, const V2F& right) {
     int length = right.windowPos.x - left.windowPos.x;
-#pragma omp parallel for schedule(dynamic) 
+
+//#pragma omp parallel for schedule(dynamic) 
     for (int i = 0; i < length; i++) {
         V2F v = V2F::lerp(left, right, (float)i / length);
         v.windowPos.x = left.windowPos.x + i;
@@ -60,8 +142,7 @@ void ScanLine(const V2F& left, const V2F& right) {
         float depth = 1;
 
         if (onetime) {
-            depth = ShadowBuffer->GetDepth(v.windowPos.x, v.windowPos.y);
-            
+            depth = ShadowBuffer->GetDepth(v.windowPos.x, v.windowPos.y);            
         }
         else {
             depth = FrontBuffer->GetDepth(v.windowPos.x, v.windowPos.y);
@@ -77,12 +158,13 @@ void ScanLine(const V2F& left, const V2F& right) {
             
             if (onetime) {     
                 ShadowBuffer->WriteDepth(v.windowPos.x, v.windowPos.y, v.windowPos.z);
+                ShadowBuffer->WritePoint(v.windowPos.x, v.windowPos.y, glm::vec4(v.windowPos.z, v.windowPos.z, v.windowPos.z, v.windowPos.z));
             //    std::cout << ShadowBuffer->depthBuffer[v.windowPos.y * SCREEN_WIDTH + v.windowPos.x] << std::endl;
             }
             glm::vec4 color = shader.FragmentShader(v);
             if (shadow->IsInShadow(v)) {
-                FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y, color);
-           //     FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y, color *glm::vec4(0.2,0.15,0.15,1));
+            //    FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y, color);
+               FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y, color *glm::vec4(0.2,0.15,0.15,1));
             }
             else {
                 FrontBuffer->WritePoint(v.windowPos.x, v.windowPos.y, color);
@@ -98,7 +180,7 @@ void ScanLine(const V2F& left, const V2F& right) {
 
 }
 
-bool init()
+/*bool init()
 {
     //Initialization flag
     bool success = true;
@@ -149,10 +231,11 @@ void close()
 
     //Quit SDL subsystems
     SDL_Quit();
-}
+}*/
 
-int main(int argc, char* args[])
+/*int main(int argc, char* args[])
 {
+
     //Start up SDL and create window
     if (!init())
     {
@@ -172,7 +255,7 @@ int main(int argc, char* args[])
             FrontBuffer = new FrameBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
             BackBuffer = new FrameBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
             ShadowBuffer = new FrameBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
-          /*  int width, height, nrChannels;
+            int width, height, nrChannels;
             unsigned char* data = stbi_load("C:\\Users\\jiasheng.huang\\Desktop\\\MySoftRender\\IMG_0093.PNG", &width, &height, &nrChannels, 0);
             if (data)
             {
@@ -184,7 +267,7 @@ int main(int argc, char* args[])
                 std::cout << "Failed to load texture" << std::endl;
             }
             stbi_image_free(data);
-            */
+            
           
 
             //2D
@@ -205,17 +288,17 @@ int main(int argc, char* args[])
        //   Mesh Box = CreateBox(glm::vec3(0.0, 0.0, 0.0), 1.5f);
             Material mat;
             mat.SetShader(&shader);
-            Material mat2;
-            mat2.SetShader(&shader);
-            mat2.SetTexture(&texture2);
-           // mat.SetTexture(&texture);
+           
+            groundmat.SetShader(&shader);
+          //  mat2.SetTexture(&texture2);
+            mat.SetTexture(&texture,&texture2);
             mat.Color = glm::vec4(1, 1, 1,1);
           //  Material mat2;
          //   mat2.SetShader(&shader);
          //   Texture texture2("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\MySoftRender\\SoftRender\\Assets\\Lisa0.tga");
           //  mat2.SetTexture(&texture2);
 
-            Model model("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\SoftRender0.2\\SoftRender\\Assets\\sphere.obj");
+            Model model("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\SoftRender0.2\\SoftRender\\Assets\\SMBE.obj");
             model.SetMaterial(0, mat);
         //    model.SetMaterial(1, mat2);
         //    model.SetMaterial(2, mat);
@@ -224,14 +307,14 @@ int main(int argc, char* args[])
           //  setModelMatrix(glm::scale(glm::mat4(1.0f), glm::vec3(5, 5, -5)));
            
       //   Object obj(Box, mat2);
-            Mesh Plane = CreatePlane(glm::vec3(-2, 0, -1.5), glm::vec3(-2, 0, 1.5), glm::vec3(2, 0, 1.5), glm::vec3(2, 0, -1.5), glm::vec3(0, 1, 0));
+            Mesh Plane = CreatePlane(glm::vec3(-0.2, 0, -0.2), glm::vec3(-0.2, 0, 0.2), glm::vec3(0.2, 0,0.2), glm::vec3(0.2, 0, -0.2), glm::vec3(0, 1, 0));
          // Mesh Box2 = CreateBox(glm::vec3(-5, 0.0, 0.0), 1.5f);
          // Mesh Box3 = CreateBox(glm::vec3(10, 0.0, 0.0), 1.5f);
          // Mesh Box4 = CreateBox(glm::vec3(-10, 0.0, 0.0), 1.5f);
          // Mesh Box5 = CreateBox(glm::vec3(-15, 0.0, 0.0), 1.5f);
        //   Mesh Box1 = CreateBox(glm::vec3(5, 0.0, 0.0), 1.0f);
           //  Material mat2(glm::vec4(0.5, 0.5, 0.5, 0.5),glm::vec4(0,0,0,0),32);
-            Object Ground(Plane, mat2);
+            Object Ground(Plane, groundmat);
            
          
 		  //  V2F o1 = shader.VertexShader(V1);
@@ -248,13 +331,13 @@ int main(int argc, char* args[])
             //While application is running
           std::thread t(ShowFps, gWindow);
           t.detach();
-         dirLight = new DirectionLight(glm::vec3(1, 1, 1), glm::vec3(1, 1, 1), glm::vec3(1, 1,1),1.0f);
+         dirLight = new DirectionLight(glm::vec3(1,-1, -1), glm::vec3(1, 1, 1), glm::vec3(1, 1,1),1.0f);
     //     pointLight = new PointLight(glm::vec3(1, 1, 1), glm::vec3(1, 0, 0), glm::vec3(1, 1, 1), 0.25f, 1.0f, 0.09f, 0.032f);
      //     spotLight = new SpotLight(glm::vec3(0,3, 0), glm::vec3(0, -1, 0), glm::vec3(0, 0, 1), glm::vec3(0.5, 0.5, 0.5), 0.25f, 1.0f, 0.09f, 0.032f,13.0f,15.5f);
  
          // dirLight->Color=glm::vec3(0,1,0);
       //   pointLight->Color = glm::vec3(1, 0, 0);
-
+         onetime = true;
          shadow = new Shadow(dirLight, Ground);
      //    shadow->Fit2Scene(Ground);
          ShadowBuffer->ClearDepthBuffer();
@@ -262,7 +345,6 @@ int main(int argc, char* args[])
          setProjectMatrix(shadow->LightSpaceCam.PerspectiveMatrix());      
          DrawModel(model);
          DrawObject(Ground);
-         std::cout << onetime << std::endl;
          onetime = false;
             while (!quit)
             {         
@@ -274,27 +356,27 @@ int main(int argc, char* args[])
                     if (event.type == SDL_KEYDOWN) {
                         switch (event.key.keysym.sym) {
                         case SDLK_w: {
-                            camera.MoveForward(0.2f);
+                            camera.MoveForward(0.1f);
                             break;
                         }
                         case SDLK_s: {
-                            camera.MoveForward(-0.2f);
+                            camera.MoveForward(-0.1f);
                             break;
                         }
                         case SDLK_a: {
-                            camera.MoveRight(-0.2f);
+                            camera.MoveRight(-0.1f);
                             break;
                         }
                         case SDLK_d: {
-                            camera.MoveRight(0.2f);
+                            camera.MoveRight(0.1f);
                             break;
                         }
                         case SDLK_q: {
-                            camera.MoveUp(0.2f);
+                            camera.MoveUp(0.1f);
                             break;
                         }
                         case SDLK_e: {
-                            camera.MoveUp(-0.2f);
+                            camera.MoveUp(-0.1f);
                             break;
                         }
                         case SDLK_UP:{
@@ -377,7 +459,7 @@ int main(int argc, char* args[])
 
 
              DrawModel(model);
-            // DrawObject(Ground);
+             DrawObject(Ground);
 
 //#pragma omp parallel for num_threads(2) 
               for (int i = 0; i < SCREEN_HEIGHT; i++) {      
@@ -412,3 +494,101 @@ int main(int argc, char* args[])
    
     return 0;
 }
+*/
+int main() {
+
+    //初始化
+    glfwInit();
+
+    GLFWwindow* window = glfwCreateWindow(SCREEN_WIDTH, SCREEN_HEIGHT, "YelloBao's SoftRender", NULL, NULL);
+    if (window == NULL)
+    {
+        std::cout << "Failed to create GLFW window" << std::endl;
+        glfwTerminate();
+        return -1;
+    }
+    shader.setModelMatrix(glm::mat4(10.0f));
+    FrontBuffer = new FrameBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
+    BackBuffer = new FrameBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
+    ShadowBuffer = new FrameBuffer(SCREEN_WIDTH, SCREEN_HEIGHT);
+    int width, height, nrChannels;
+    ViewPortMatrix = GetViewPortMatrix(0, 0, SCREEN_WIDTH, SCREEN_HEIGHT);
+    Material mat;
+    mat.SetShader(&shader);
+    groundmat.SetShader(&shader);
+    mat.SetTexture(&texture, &texture2,&texture3);
+    mat.Color = glm::vec4(1, 1, 1, 1);
+    Model model("C:\\Users\\jiasheng.huang\\Documents\\GitHub\\SoftRender0.2\\SoftRender\\Assets\\SMBE.obj");
+    model.SetMaterial(0, mat);
+ 
+    Mesh Plane = CreatePlane(glm::vec3(-0.1, 0, -0.1), glm::vec3(-0.1, 0, 0.1), glm::vec3(0.1, 0, 0.1), glm::vec3(0.1, 0, -0.1), glm::vec3(0, 1, 0));
+    Object Ground(Plane, groundmat);
+    std::thread t(ShowFps, window);
+    t.detach();
+    dirLight = new DirectionLight(glm::vec3(1, -1, -0.5), glm::vec3(0.9, 1, 1), glm::vec3(1, 1, 1), 1.0f);
+    onetime = true;
+    shadow = new Shadow(dirLight, Ground);
+    shadow->Fit2Scene(model.objects[0]);
+    ShadowBuffer->ClearDepthBuffer();
+  setViewMatrix(shadow->LightSpaceCam.ViewMatrix());
+  setProjectMatrix(shadow->LightSpaceCam.PerspectiveMatrix());
+    DrawModel(model);
+  //  DrawObject(Ground);
+    onetime = false;
+    glfwMakeContextCurrent(window);
+   // glfwSetFramebufferSizeCallback(window, framebuffer_size_callback);
+    glfwSetScrollCallback(window, scroll_callback);
+
+    //加载opengl函数
+    if (!gladLoadGLLoader((GLADloadproc)glfwGetProcAddress))
+    {
+        std::cout << "Failed to initialize GLAD" << std::endl;
+        return -1;
+    }
+    while (!glfwWindowShouldClose(window))
+    {
+        processInput(window);
+        setViewMatrix(camera.ViewMatrix());
+        setProjectMatrix(camera.PerspectiveMatrix());
+        camera.UpdateCameraVectors();
+        //fps
+        fps++;
+
+
+        //Clear screen
+        //std::cout << fps/(float)t1 << std::endl;
+
+
+
+        FrontBuffer->ClearColorBuffer(glm::vec4(35, 35, 35, 255));
+        FrontBuffer->ClearDepthBuffer();
+        //   ScanLineTriangle(o1, o2, o3);
+
+           //Rendering
+        //  setModelMatrix(glm::mat4(10.0f));
+
+
+        shader.UpdateViewPlanes();
+
+        //  DrawObject(obj);
+       //   std::thread first(Draw, gRenderer, shader, FrontBuffer, SCREEN_WIDTH, SCREEN_HEIGHT);
+        //  std::thread second(Draw2, gRenderer, shader, FrontBuffer, SCREEN_WIDTH, SCREEN_HEIGHT);
+       //   first.join();
+        //  second.join();   
+
+        ModelMatrix = glm::mat4(1.0f);
+        ModelMatrix = glm::translate(ModelMatrix, glm::vec3(-1, 0, 0));
+        UpdateNormalMatrix();
+
+        DrawModel(model);
+    //    DrawObject(Ground);
+        glDrawPixels(SCREEN_WIDTH, SCREEN_HEIGHT, GL_RGBA, GL_UNSIGNED_BYTE, FrontBuffer->colorBuffer.data());
+        fps++;
+
+        glfwSwapBuffers(window);
+        glfwPollEvents();
+    }
+    glfwTerminate();
+    return 0;
+}
+

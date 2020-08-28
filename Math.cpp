@@ -1,5 +1,11 @@
 #include "SoftRender/Math.h"
-
+float saturate(const float& v) {
+	if (v > 1)
+		return 1;
+	if (v < 0)
+		return 0;
+	return v;
+}
 glm::vec4 Lerp(const glm::vec4& v1, const glm::vec4& v2, float factor) {
 	return (1.0f - factor) * v1 + factor * v2;
 }
@@ -92,4 +98,13 @@ void ViewingFrustumPlanes(std::vector<glm::vec4>& result, const glm::mat4& vp) {
 	}
 bool Point2Plane(glm::vec4& p, glm::vec3& v) {
 	return p.x * v.x + p.y * v.y + p.z * v.z + p.w >= 0;
+}
+glm::mat3 GetNormalMatrix(const glm::mat4& model) {
+	glm::mat3 result = model;
+	result = glm::inverse(result);
+	result = glm::transpose(result);
+	return result;
+}
+void UpdateNormalMatrix() {
+	NormalMatrix = GetNormalMatrix(ModelMatrix);
 }

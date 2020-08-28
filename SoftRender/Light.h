@@ -37,7 +37,8 @@ public:
 	glm::vec3 CalcDirLight(
 		const glm::vec3& worldNormal,
 		const glm::vec3& worldViewDir,
-		const glm::vec3& albedo
+		const glm::vec3& albedo,
+		const glm::vec3& smbe
 	);
 
 }; 
